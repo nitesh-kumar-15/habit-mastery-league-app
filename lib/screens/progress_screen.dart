@@ -15,6 +15,7 @@ class ProgressScreen extends StatelessWidget {
     const missionsSvc = MissionsService();
 
     return FutureBuilder(
+      // load all dashboard stats together for one screen render.
       future: Future.wait([
         repo.getAllHabits(),
         repo.totalCompletionsAllHabits(),
@@ -45,6 +46,7 @@ class ProgressScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(title: const Text('Progress & missions')),
+          // empty-state message matches proposal guidance.
           body: habits.isEmpty
               ? ListView(
                   children: [
@@ -95,6 +97,7 @@ class ProgressScreen extends StatelessWidget {
                       (m) => Card(
                         child: ListTile(
                           title: Text(m.title),
+                          // keep mission progress visual and compact.
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             mainAxisSize: MainAxisSize.min,

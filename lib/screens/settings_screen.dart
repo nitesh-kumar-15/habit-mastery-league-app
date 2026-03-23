@@ -21,6 +21,7 @@ class SettingsScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: SegmentedButton<ThemeMode>(
+              // segmented control gives immediate theme switching.
               segments: const [
                 ButtonSegment(
                   value: ThemeMode.system,
@@ -55,6 +56,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             trailing: const Icon(Icons.schedule),
             onTap: () async {
+              // save only local reminder preference for now.
               final picked = await showTimePicker(
                 context: context,
                 initialTime: s.reminderTimeOfDay,

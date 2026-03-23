@@ -9,6 +9,7 @@ class CoachPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // hide panel when no tips are available.
     if (tips.isEmpty) return const SizedBox.shrink();
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -30,6 +31,7 @@ class CoachPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
+            // render each tip as title + short explanation.
             ...tips.map(
               (t) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),

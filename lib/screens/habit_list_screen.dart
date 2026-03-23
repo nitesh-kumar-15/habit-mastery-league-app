@@ -45,6 +45,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
       ),
       body: Column(
         children: [
+          // quick title search for large habit sets.
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(
@@ -64,6 +65,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
               children: [
                 const Text('Category: '),
                 Expanded(
+                  // category filter narrows list without extra screens.
                   child: DropdownButton<String>(
                     isExpanded: true,
                     value: _category,
@@ -113,6 +115,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
                   list = list.where((h) => h.category == _category).toList();
                 }
                 if (list.isEmpty) {
+                  // distinguish truly empty data from filtered-empty results.
                   return ListView(
                     children: [
                       const SizedBox(height: 48),
@@ -153,6 +156,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
                         );
                       },
                       onLongPress: () async {
+                        // long-press opens lightweight habit actions.
                         await showModalBottomSheet<void>(
                           context: context,
                           showDragHandle: true,

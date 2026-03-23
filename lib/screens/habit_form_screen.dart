@@ -41,6 +41,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
   }
 
   Future<void> _load() async {
+    // load existing values when editing an existing habit.
     final repo = context.read<HabitRepository>();
     final h = await repo.getHabit(widget.habitId!);
     if (h != null && mounted) {
@@ -62,6 +63,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
   }
 
   Future<void> _pickDate() async {
+    // allow realistic planning horizon while blocking ancient invalid dates.
     final picked = await showDatePicker(
       context: context,
       initialDate: _startDate,
@@ -95,6 +97,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
     final startStr = AppDates.formatDate(_startDate);
     try {
       if (widget.habitId == null) {
+        // create mode writes a new row.
         await repo.insertHabit(
           title: title,
           description: _description.text,
@@ -103,6 +106,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
           startDate: startStr,
         );
       } else {
+        // edit mode patches only this habit row.
         final existing = await repo.getHabit(widget.habitId!);
         if (existing == null) return;
         await repo.updateHabit(
@@ -117,6 +121,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
       }
       if (mounted) Navigator.pop(context);
     } catch (_) {
+      // retry action helps users recover transient sqlite issues.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

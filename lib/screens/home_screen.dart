@@ -39,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onRepo() {
     if (_repo == null) return;
+    // refresh home data whenever repository notifies.
     setState(() {
       _future = _load(_repo!);
     });
@@ -134,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
+          // pull-to-refresh forces a fresh local query.
           setState(() {
             _future = _load(repo);
           });
@@ -238,6 +240,7 @@ class _HabitTodayTile extends StatelessWidget {
                   children: [
                     Expanded(
                       child: FilledButton.tonal(
+                        // disable duplicate completed check-ins for today.
                         onPressed: status == 'completed'
                             ? null
                             : () async {
@@ -275,6 +278,7 @@ class _HabitTodayTile extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton(
+                        // disable duplicate missed check-ins for today.
                         onPressed: status == 'missed'
                             ? null
                             : () async {

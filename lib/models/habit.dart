@@ -20,6 +20,7 @@ class Habit {
   final String createdAt;
   final String updatedAt;
 
+  // copy helper keeps updates immutable in ui/repository code.
   Habit copyWith({
     int? id,
     String? title,
@@ -42,6 +43,7 @@ class Habit {
     );
   }
 
+  // map keys match sqlite column names.
   Map<String, Object?> toMap() => {
         'id': id,
         'title': title,
@@ -54,6 +56,7 @@ class Habit {
       };
 
   static Habit fromMap(Map<String, Object?> m) {
+    // apply safe defaults for optional text fields.
     return Habit(
       id: m['id']! as int,
       title: m['title']! as String,
@@ -75,6 +78,7 @@ class Habit {
     required String createdAt,
     required String updatedAt,
   }) =>
+      // insert map excludes id because sqlite autoincrements it.
       {
         'title': title,
         'description': description,

@@ -13,6 +13,7 @@ class HabitMasteryApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
+      // keep app-wide state in one place for predictable rebuilds.
       providers: [
         ChangeNotifierProvider(
           create: (_) => HabitRepository(DatabaseHelper.instance),
@@ -24,6 +25,7 @@ class HabitMasteryApp extends StatelessWidget {
       child: Consumer<SettingsController>(
         builder: (context, settings, _) {
           if (!settings.loaded) {
+            // wait for local preferences before drawing main ui.
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               theme: ThemeData(
@@ -38,6 +40,7 @@ class HabitMasteryApp extends StatelessWidget {
           return MaterialApp(
             title: 'Habit Mastery League',
             debugShowCheckedModeBanner: false,
+            // theme mode comes from local preferences.
             themeMode: settings.themeMode,
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(

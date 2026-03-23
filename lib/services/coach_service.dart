@@ -28,6 +28,7 @@ class CoachService {
     final today = AppDates.today();
 
     for (final h in habits) {
+      // suggest simplification when recent misses are high.
       final missed = await repo.missedInLast7Days(h.id);
       if (missed >= 3) {
         tips.add(
@@ -40,6 +41,7 @@ class CoachService {
         );
       }
 
+      // suggest progression after sustained streaks.
       final streak = await repo.streakEndingOn(h.id, today);
       if (streak >= 10) {
         tips.add(
@@ -54,6 +56,7 @@ class CoachService {
 
       final wk = await repo.weekdayCompletionsCount(h.id);
       final we = await repo.weekendCompletionsCount(h.id);
+      // detect clear weekday pattern and propose schedule fit.
       if (wk + we >= 5 && wk >= we * 3 && we <= 2) {
         tips.add(
           CoachTip(
@@ -75,6 +78,7 @@ class CoachService {
       );
     }
 
+    // cap tips to keep home screen compact and readable.
     return tips.take(5).toList();
   }
 }

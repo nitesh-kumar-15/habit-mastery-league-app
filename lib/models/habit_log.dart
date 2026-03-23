@@ -14,6 +14,7 @@ class HabitLog {
   final String status;
   final String notes;
 
+  // map keys align with sqlite log columns.
   Map<String, Object?> toMap() => {
         'id': id,
         'habit_id': habitId,
@@ -23,6 +24,7 @@ class HabitLog {
       };
 
   static HabitLog fromMap(Map<String, Object?> m) {
+    // empty string keeps null notes out of ui rendering.
     return HabitLog(
       id: m['id']! as int,
       habitId: m['habit_id']! as int,

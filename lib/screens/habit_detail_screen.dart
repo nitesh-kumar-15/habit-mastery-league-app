@@ -18,6 +18,7 @@ class HabitDetailScreen extends StatelessWidget {
     final repo = context.watch<HabitRepository>();
 
     return FutureBuilder(
+      // fetch habit, logs, and streak together for one render pass.
       future: Future.wait([
         repo.getHabit(habitId),
         repo.getLogsForHabit(habitId),
@@ -61,6 +62,7 @@ class HabitDetailScreen extends StatelessWidget {
         final completed = logs.where((l) => l.status == 'completed').length;
         final missed = logs.where((l) => l.status == 'missed').length;
         final denom = completed + missed;
+        // completion rate ignores days without a check-in.
         final pct = denom == 0 ? 0.0 : (100 * completed / denom);
 
         return Scaffold(

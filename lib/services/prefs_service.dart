@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PrefsService {
+  // keys stay centralized to avoid typos across screens.
   static const _themeMode = 'theme_mode';
   static const _reminderMinutes = 'daily_reminder_time_minutes';
   static const _showTips = 'show_motivation_tips';
@@ -21,6 +22,7 @@ class PrefsService {
 
   Future<void> setThemeMode(ThemeMode mode) async {
     final p = await SharedPreferences.getInstance();
+    // persist enum as readable string values.
     final s = switch (mode) {
       ThemeMode.dark => 'dark',
       ThemeMode.light => 'light',

@@ -10,15 +10,18 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_db != null) return _db!;
+    // store db file inside the app documents directory.
     final dir = await getApplicationDocumentsDirectory();
     final path = p.join(dir.path, 'habit_mastery_league.db');
     _db = await openDatabase(
       path,
       version: 1,
       onConfigure: (db) async {
+        // keep relational deletes consistent for habit logs.
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: (db, version) async {
+        // habits table keeps user-defined routines.
         await db.execute('''
 CREATE TABLE habits (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,6 +34,7 @@ CREATE TABLE habits (
   updated_at TEXT NOT NULL
 );
 ''');
+        // logs table stores daily status by habit.
         await db.execute('''
 CREATE TABLE habit_logs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,6 +45,7 @@ CREATE TABLE habit_logs (
   FOREIGN KEY (habit_id) REFERENCES habits (id) ON DELETE CASCADE
 );
 ''');
+        // one status per habit per date.
         await db.execute(
           'CREATE UNIQUE INDEX idx_habit_logs_habit_date ON habit_logs(habit_id, date);',
         );

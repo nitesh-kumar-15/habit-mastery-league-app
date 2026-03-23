@@ -33,6 +33,7 @@ class MissionsService {
   const MissionsService();
 
   Future<List<MissionItem>> missions(HabitRepository repo) async {
+    // mission progress is derived from local weekly and streak stats.
     final week = await repo.completionsThisWeek();
     final habits = await repo.getAllHabits();
     final today = AppDates.today();
@@ -60,6 +61,7 @@ class MissionsService {
   }
 
   Future<List<BadgeItem>> badges(HabitRepository repo) async {
+    // badges unlock from total completions and best streak.
     final habits = await repo.getAllHabits();
     final today = AppDates.today();
     final total = await repo.totalCompletionsAllHabits();
