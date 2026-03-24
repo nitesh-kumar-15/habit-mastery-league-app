@@ -45,9 +45,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
       ),
       body: Column(
         children: [
-          // quick title search for large habit sets.
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
             child: TextField(
               controller: _search,
               decoration: const InputDecoration(
@@ -59,25 +58,29 @@ class _HabitListScreenState extends State<HabitListScreen> {
               onChanged: (_) => setState(() {}),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Text('Category: '),
-                Expanded(
-                  // category filter narrows list without extra screens.
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: _category,
-                    items: _categories
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _category = v ?? 'All'),
+          SizedBox(
+            height: 46,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (context, i) {
+                final c = _categories[i];
+                final selected = _category == c;
+                return FilterChip(
+                  selected: selected,
+                  label: Text(c),
+                  onSelected: (_) => setState(() => _category = c),
+                  showCheckmark: false,
+                  labelStyle: TextStyle(
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),
-                ),
-              ],
+                );
+              },
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemCount: _categories.length,
             ),
           ),
+          const SizedBox(height: 8),
           Expanded(
             child: FutureBuilder<List<Habit>>(
               future: repo.getAllHabits(),
@@ -115,7 +118,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
                   list = list.where((h) => h.category == _category).toList();
                 }
                 if (list.isEmpty) {
-                  // distinguish truly empty data from filtered-empty results.
                   return ListView(
                     children: [
                       const SizedBox(height: 48),
@@ -146,69 +148,96 @@ class _HabitListScreenState extends State<HabitListScreen> {
                   itemCount: list.length,
                   itemBuilder: (context, i) {
                     final h = list[i];
-                    return ListTile(
-                      title: Text(h.title),
-                      subtitle: Text('${h.category} · ${h.frequency}'),
-                      onTap: () {
-                        Navigator.push<void>(
-                          context,
-                          MaterialPageRoute(builder: (_) => HabitDetailScreen(habitId: h.id)),
-                        );
-                      },
-                      onLongPress: () async {
-                        // long-press opens lightweight habit actions.
-                        await showModalBottomSheet<void>(
-                          context: context,
-                          showDragHandle: true,
-                          builder: (ctx) => SafeArea(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ListTile(
-                                  leading: const Icon(Icons.edit),
-                                  title: const Text('Edit'),
-                                  onTap: () {
-                                    Navigator.pop(ctx);
-                                    Navigator.push<void>(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => HabitFormScreen(habitId: h.id),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                ListTile(
-                                  leading: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                                  title: const Text('Delete'),
-                                  onTap: () async {
-                                    Navigator.pop(ctx);
-                                    final ok = await showDialog<bool>(
-                                      context: context,
-                                      builder: (c) => AlertDialog(
-                                        title: const Text('Delete habit?'),
-                                        content: Text('Remove "${h.title}" and its logs?'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(c, false),
-                                            child: const Text('Cancel'),
-                                          ),
-                                          FilledButton(
-                                            onPressed: () => Navigator.pop(c, true),
-                                            child: const Text('Delete'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                    if (ok == true && context.mounted) {
-                                      await repo.deleteHabit(h.id);
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
+                    return Card(
+                      margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+                      child: ListTile(
+                        leading: Container(
+                          height: 48,
+                          width: 48,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Theme.of(context).colorScheme.primaryContainer,
                           ),
-                        );
-                      },
+                          child: Center(
+                            child: Text(_iconForCategory(h.category), style: const TextStyle(fontSize: 24)),
+                          ),
+                        ),
+                        title: Text(
+                          h.title,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              _TagChip(text: h.category),
+                              _TagChip(text: h.frequency),
+                            ],
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.push<void>(
+                            context,
+                            MaterialPageRoute(builder: (_) => HabitDetailScreen(habitId: h.id)),
+                          );
+                        },
+                        onLongPress: () async {
+                          await showModalBottomSheet<void>(
+                            context: context,
+                            showDragHandle: true,
+                            builder: (ctx) => SafeArea(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: const Icon(Icons.edit),
+                                    title: const Text('Edit'),
+                                    onTap: () {
+                                      Navigator.pop(ctx);
+                                      Navigator.push<void>(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => HabitFormScreen(habitId: h.id),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                                    title: const Text('Delete'),
+                                    onTap: () async {
+                                      Navigator.pop(ctx);
+                                      final ok = await showDialog<bool>(
+                                        context: context,
+                                        builder: (c) => AlertDialog(
+                                          title: const Text('Delete habit?'),
+                                          content: Text('Remove "${h.title}" and its logs?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(c, false),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            FilledButton(
+                                              onPressed: () => Navigator.pop(c, true),
+                                              child: const Text('Delete'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (ok == true && context.mounted) {
+                                        await repo.deleteHabit(h.id);
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   },
                 );
@@ -217,6 +246,39 @@ class _HabitListScreenState extends State<HabitListScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+String _iconForCategory(String category) {
+  switch (category.toLowerCase()) {
+    case 'study':
+      return '📚';
+    case 'health':
+      return '🍎';
+    case 'productivity':
+      return '⚡';
+    case 'finance':
+      return '💰';
+    default:
+      return '🎯';
+  }
+}
+
+class _TagChip extends StatelessWidget {
+  const _TagChip({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      ),
+      child: Text(text, style: Theme.of(context).textTheme.labelMedium),
     );
   }
 }

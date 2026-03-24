@@ -37,9 +37,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return _HomeData(habits, tips);
   }
 
+  Future<int> _completedToday(HabitRepository repo, List<Habit> habits) async {
+    final today = AppDates.today();
+    final logs = await Future.wait(habits.map((h) => repo.getLogForDay(h.id, today)));
+    return logs.where((l) => l?.status == 'completed').length;
+  }
+
   void _onRepo() {
     if (_repo == null) return;
-    // refresh home data whenever repository notifies.
     setState(() {
       _future = _load(_repo!);
     });
@@ -119,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Today'),
+        title: const Text('HabitFlow'),
         actions: [
           IconButton(
             tooltip: 'Add habit',
@@ -135,7 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          // pull-to-refresh forces a fresh local query.
           setState(() {
             _future = _load(repo);
           });
@@ -183,12 +187,73 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               )
-            : ListView(
-                padding: const EdgeInsets.only(bottom: 24),
-                children: [
-                  if (settings.showMotivationTips) CoachPanel(tips: data.tips),
-                  ...data.habits.map((h) => _HabitTodayTile(habit: h)),
-                ],
+            : FutureBuilder<int>(
+                future: _completedToday(repo, data.habits),
+                builder: (context, completeSnap) {
+                  final doneCount = completeSnap.data ?? 0;
+                  final totalCount = data.habits.length;
+                  final pct = totalCount == 0 ? 0.0 : doneCount / totalCount;
+                  return ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(22),
+                          gradient: LinearGradient(
+                            colors: [
+                              Theme.of(context).colorScheme.primary,
+                              Theme.of(context).colorScheme.tertiary,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppDates.today(),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '$doneCount of $totalCount habits completed',
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            const SizedBox(height: 10),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                minHeight: 10,
+                                value: pct,
+                                backgroundColor: Colors.white.withValues(alpha: 0.3),
+                                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (settings.showMotivationTips) CoachPanel(tips: data.tips),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+                        child: Text(
+                          "Today's habits",
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ),
+                      ...data.habits.map((h) => _HabitTodayTile(habit: h)),
+                    ],
+                  );
+                },
               ),
       ),
     );
@@ -214,14 +279,38 @@ class _HabitTodayTile extends StatelessWidget {
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(habit.title),
-                  subtitle: Text('${habit.category} · ${habit.frequency}'),
+                  leading: Container(
+                    height: 44,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                    ),
+                    child: Center(
+                      child: Text(
+                        _iconForCategory(habit.category),
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    habit.title,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      _MetaChip(text: habit.category),
+                      _MetaChip(text: habit.frequency),
+                    ],
+                  ),
                   trailing: status == 'completed'
                       ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
                       : status == 'missed'
@@ -240,7 +329,6 @@ class _HabitTodayTile extends StatelessWidget {
                   children: [
                     Expanded(
                       child: FilledButton.tonal(
-                        // disable duplicate completed check-ins for today.
                         onPressed: status == 'completed'
                             ? null
                             : () async {
@@ -278,7 +366,6 @@ class _HabitTodayTile extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton(
-                        // disable duplicate missed check-ins for today.
                         onPressed: status == 'missed'
                             ? null
                             : () async {
@@ -308,6 +395,42 @@ class _HabitTodayTile extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+String _iconForCategory(String category) {
+  switch (category.toLowerCase()) {
+    case 'study':
+      return '📚';
+    case 'health':
+      return '🍎';
+    case 'productivity':
+      return '⚡';
+    case 'finance':
+      return '💰';
+    default:
+      return '🎯';
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      ),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium,
+      ),
     );
   }
 }

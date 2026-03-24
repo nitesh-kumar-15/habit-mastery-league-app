@@ -14,14 +14,26 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
-          const ListTile(
-            title: Text('Appearance'),
-            subtitle: Text('Theme follows Material; pick light, dark, or system.'),
+          Card(
+            margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              leading: CircleAvatar(
+                radius: 26,
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                child: const Text('🎓', style: TextStyle(fontSize: 22)),
+              ),
+              title: const Text(
+                'Student Tracker',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: const Text('Local-first habit workflow'),
+            ),
           ),
+          _SectionHeader(title: 'Appearance'),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: SegmentedButton<ThemeMode>(
-              // segmented control gives immediate theme switching.
               segments: const [
                 ButtonSegment(
                   value: ThemeMode.system,
@@ -47,7 +59,7 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
           ),
-          const Divider(),
+          _SectionHeader(title: 'Notifications'),
           ListTile(
             title: const Text('Daily reminder time'),
             subtitle: Text(
@@ -56,7 +68,6 @@ class SettingsScreen extends StatelessWidget {
             ),
             trailing: const Icon(Icons.schedule),
             onTap: () async {
-              // save only local reminder preference for now.
               final picked = await showTimePicker(
                 context: context,
                 initialTime: s.reminderTimeOfDay,
@@ -67,6 +78,7 @@ class SettingsScreen extends StatelessWidget {
               }
             },
           ),
+          _SectionHeader(title: 'Coach & tips'),
           SwitchListTile(
             title: const Text('Show coach tips on Home'),
             subtitle: const Text('Hide the rule-based coach panel if you prefer a calmer Today screen.'),
@@ -74,6 +86,27 @@ class SettingsScreen extends StatelessWidget {
             onChanged: (v) => s.setShowMotivationTips(v),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+      child: Text(
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              letterSpacing: 1.1,
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
       ),
     );
   }

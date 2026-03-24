@@ -15,7 +15,6 @@ class ProgressScreen extends StatelessWidget {
     const missionsSvc = MissionsService();
 
     return FutureBuilder(
-      // load all dashboard stats together for one screen render.
       future: Future.wait([
         repo.getAllHabits(),
         repo.totalCompletionsAllHabits(),
@@ -44,93 +43,45 @@ class ProgressScreen extends StatelessWidget {
         final badges = snap.data![4] as List<BadgeItem>;
         final bestStreak = snap.data![5] as int;
 
-        return Scaffold(
-          appBar: AppBar(title: const Text('Progress & missions')),
-          // empty-state message matches proposal guidance.
-          body: habits.isEmpty
-              ? ListView(
-                  children: [
-                    const SizedBox(height: 48),
-                    Icon(Icons.insights_outlined, size: 64, color: Theme.of(context).colorScheme.outline),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Start tracking to see your stats.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ],
-                )
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Text('Overview', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _StatTile(
-                            label: 'Best streak',
-                            value: '$bestStreak days',
-                            icon: Icons.local_fire_department,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _StatTile(
-                            label: 'This week',
-                            value: '$week check-ins',
-                            icon: Icons.calendar_view_week,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _StatTile(
-                      label: 'Total completions',
-                      value: '$total',
-                      icon: Icons.check_circle_outline,
-                    ),
-                    const SizedBox(height: 24),
-                    Text('Missions', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    ...missions.map(
-                      (m) => Card(
-                        child: ListTile(
-                          title: Text(m.title),
-                          // keep mission progress visual and compact.
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const SizedBox(height: 8),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  minHeight: 8,
-                                  value: m.target == 0 ? 0 : m.progress / m.target,
-                                ),
-                              ),
-                            ],
-                          ),
-                          trailing: m.done
-                              ? Icon(Icons.emoji_events, color: Theme.of(context).colorScheme.primary)
-                              : Text('${m.progress}/${m.target}'),
-                        ),
+        return DefaultTabController(
+          length: 3,
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Progress'),
+              bottom: const TabBar(
+                tabs: [
+                  Tab(text: 'Overview'),
+                  Tab(text: 'Missions'),
+                  Tab(text: 'Badges'),
+                ],
+              ),
+            ),
+            body: habits.isEmpty
+                ? ListView(
+                    children: [
+                      const SizedBox(height: 48),
+                      Icon(Icons.insights_outlined, size: 64, color: Theme.of(context).colorScheme.outline),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Start tracking to see your stats.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text('Badges', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    ...badges.map(
-                      (b) => ListTile(
-                        dense: true,
-                        title: Text(b.title),
-                        subtitle: Text(b.description),
-                        trailing: b.unlocked ? const Icon(Icons.check) : null,
+                    ],
+                  )
+                : TabBarView(
+                    children: [
+                      _OverviewTab(
+                        activeHabits: habits.length,
+                        total: total,
+                        week: week,
+                        bestStreak: bestStreak,
                       ),
-                    ),
-                  ],
-                ),
+                      _MissionsTab(missions: missions),
+                      _BadgesTab(badges: badges),
+                    ],
+                  ),
+          ),
         );
       },
     );
@@ -176,6 +127,176 @@ class _StatTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _OverviewTab extends StatelessWidget {
+  const _OverviewTab({
+    required this.activeHabits,
+    required this.total,
+    required this.week,
+    required this.bestStreak,
+  });
+
+  final int activeHabits;
+  final int total;
+  final int week;
+  final int bestStreak;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _StatTile(
+                label: 'Active habits',
+                value: '$activeHabits',
+                icon: Icons.track_changes,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StatTile(
+                label: 'Total check-ins',
+                value: '$total',
+                icon: Icons.task_alt,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _StatTile(
+                label: 'Best streak',
+                value: '$bestStreak days',
+                icon: Icons.local_fire_department,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StatTile(
+                label: 'This week',
+                value: '$week check-ins',
+                icon: Icons.calendar_view_week,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _MissionsTab extends StatelessWidget {
+  const _MissionsTab({required this.missions});
+
+  final List<MissionItem> missions;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: missions
+          .map(
+            (m) => Card(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            m.title,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (m.done)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: const Text('Done!'),
+                          )
+                        else
+                          Text('${m.progress}/${m.target}'),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        minHeight: 9,
+                        value: m.target == 0 ? 0 : m.progress / m.target,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _BadgesTab extends StatelessWidget {
+  const _BadgesTab({required this.badges});
+
+  final List<BadgeItem> badges;
+
+  @override
+  Widget build(BuildContext context) {
+    final unlocked = badges.where((b) => b.unlocked).length;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.tertiary,
+              ],
+            ),
+          ),
+          child: Text(
+            '$unlocked / ${badges.length} badges unlocked',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ),
+        ...badges.map(
+          (b) => Card(
+            child: ListTile(
+              leading: Icon(
+                b.unlocked ? Icons.workspace_premium : Icons.lock_outline,
+                color: b.unlocked ? Theme.of(context).colorScheme.primary : null,
+              ),
+              title: Text(b.title),
+              subtitle: Text(b.description),
+              trailing: b.unlocked ? const Icon(Icons.check_circle) : null,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

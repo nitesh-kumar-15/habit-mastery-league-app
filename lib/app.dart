@@ -10,10 +10,58 @@ import 'services/settings_controller.dart';
 class HabitMasteryApp extends StatelessWidget {
   const HabitMasteryApp({super.key});
 
+  ThemeData _buildTheme(Brightness brightness) {
+    final dark = brightness == Brightness.dark;
+    final scheme = ColorScheme.fromSeed(
+      seedColor: const Color(0xFF6B4EE6),
+      brightness: brightness,
+    );
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: dark ? const Color(0xFF12131A) : const Color(0xFFF6F5FC),
+      appBarTheme: AppBarTheme(
+        centerTitle: false,
+        backgroundColor: Colors.transparent,
+        foregroundColor: scheme.onSurface,
+        elevation: 0,
+      ),
+      cardTheme: CardThemeData(
+        color: dark ? const Color(0xFF1D1E28) : Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: dark ? const Color(0xFF252736) : Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: scheme.primary, width: 1.4),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        indicatorColor: scheme.primary.withValues(alpha: dark ? 0.24 : 0.17),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return TextStyle(
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          );
+        }),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      // keep app-wide state in one place for predictable rebuilds.
       providers: [
         ChangeNotifierProvider(
           create: (_) => HabitRepository(DatabaseHelper.instance),
@@ -25,7 +73,6 @@ class HabitMasteryApp extends StatelessWidget {
       child: Consumer<SettingsController>(
         builder: (context, settings, _) {
           if (!settings.loaded) {
-            // wait for local preferences before drawing main ui.
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               theme: ThemeData(
@@ -40,22 +87,9 @@ class HabitMasteryApp extends StatelessWidget {
           return MaterialApp(
             title: 'Habit Mastery League',
             debugShowCheckedModeBanner: false,
-            // theme mode comes from local preferences.
             themeMode: settings.themeMode,
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: const Color(0xFF6B4EE6),
-                brightness: Brightness.light,
-              ),
-              useMaterial3: true,
-            ),
-            darkTheme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: const Color(0xFFB8A4FF),
-                brightness: Brightness.dark,
-              ),
-              useMaterial3: true,
-            ),
+            theme: _buildTheme(Brightness.light),
+            darkTheme: _buildTheme(Brightness.dark),
             home: const ShellScreen(),
           );
         },
