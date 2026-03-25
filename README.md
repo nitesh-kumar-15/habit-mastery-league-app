@@ -6,8 +6,7 @@ Offline-first Flutter habit tracker for students (CSC 4360 — Mobile App Develo
 
 | Name | Role |
 |------|------|
-| Nitesh Kumar | UI/UX, navigation, documentation |
-| Tomachi Egere | SQLite, business logic, validation, testing |
+| Nitesh Kumar | UI/UX, navigation, documentation, SQLite, business logic, validation, testing |
 
 ## Features
 
