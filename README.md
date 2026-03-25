@@ -22,6 +22,11 @@ Offline-first Flutter habit tracker for students (CSC 4360 — Mobile App Develo
 - Flutter 3.x, Dart 3.x
 - `sqflite`, `path_provider`, `shared_preferences`, `intl`, `provider`
 
+## Environment
+- Flutter 3.38.7
+- Dart 3.10.7
+- DevTools 2.51.1
+
 ## Setup
 
 1. Install [Flutter](https://docs.flutter.dev/get-started/install) (stable).
